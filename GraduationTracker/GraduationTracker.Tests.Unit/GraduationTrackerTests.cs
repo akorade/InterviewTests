@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using System.Linq;
+using Moq;
 
 namespace GraduationTracker.Tests.Unit
 {
@@ -11,7 +12,16 @@ namespace GraduationTracker.Tests.Unit
         [TestMethod]
         public void TestHasCredits()
         {
-            var tracker = new GraduationTracker();
+            // We need to mock the repository class and setup all the methods within the moq. 
+            var repository = new Mock<IRepository>();
+            repository.Setup(r => r.GetDiploma(It.IsAny<int>())).Returns(new Diploma());
+            repository.Setup(r => r.GetRequirement(100)).Returns(new Requirement { Id = 100, Name = "Math", MinimumMark = 50, Courses = new int[] { 1 }, Credits = 1 });
+            repository.Setup(r => r.GetRequirement(102)).Returns(new Requirement { Id = 102, Name = "Science", MinimumMark = 50, Courses = new int[] { 2 }, Credits = 1 });
+            repository.Setup(r => r.GetRequirement(103)).Returns(new Requirement { Id = 103, Name = "Literature", MinimumMark = 50, Courses = new int[] { 3 }, Credits = 1 });
+            repository.Setup(r => r.GetRequirement(104)).Returns(new Requirement { Id = 104, Name = "Physichal Education", MinimumMark = 50, Courses = new int[] { 4 }, Credits = 1 });
+            repository.Setup(r => r.GetStudent(It.IsAny<int>())).Returns(new Student());
+            var tracker = new GraduationTracker(repository.Object);
+
 
             var diploma = new Diploma
             {
