@@ -6,60 +6,32 @@ using System.Threading.Tasks;
 
 namespace GraduationTracker
 {
-    public partial class GraduationTracker
+    public class GraduationTracker
     {   
         public Tuple<bool, STANDING>  HasGraduated(Diploma diploma, Student student)
         {
             var credits = 0;
             var average = 0;
-        
-            for(int i = 0; i < diploma.Requirements.Length; i++)
+            int totalCourses = 0;
+            for (int i = 0; i < diploma.Requirements.Length; i++)
             {
-                for(int j = 0; j < student.Courses.Length; j++)
-                {
-                    var requirement = Repository.GetRequirement(diploma.Requirements[i]);
-
-                    for (int k = 0; k < requirement.Courses.Length; k++)
-                    {
-                        if (requirement.Courses[k] == student.Courses[j].Id)
-                        {
-                            average += student.Courses[j].Mark;
-                            if (student.Courses[j].Mark > requirement.MinimumMark)
-                            {
-                                credits += requirement.Credits;
-                            }
-                        }
-                    }
-                }
+                var requirement = Repository.GetRequirement(diploma.Requirements[i]);
+                var requiredCoursesCompleted = student.Courses.Where(c => requirement.Courses.Contains(c.Id));
+                average += requiredCoursesCompleted.Sum(c => c.Mark);
+                credits += requiredCoursesCompleted.Where(rcp => rcp.Mark > requirement.MinimumMark).Count() * requirement.Credits;
+                totalCourses = requirement.Courses.Count();
             }
+            average = average / totalCourses;
 
-            average = average / student.Courses.Length;
-
-            var standing = STANDING.None;
-
+            // No Case for STANDING.SumaCumLaude defined: requirement not clear
             if (average < 50)
-                standing = STANDING.Remedial;
+                return new Tuple<bool, STANDING>(false, STANDING.Remedial);
             else if (average < 80)
-                standing = STANDING.Average;
+                return new Tuple<bool, STANDING>(true, STANDING.Average);
             else if (average < 95)
-                standing = STANDING.MagnaCumLaude;
+                return new Tuple<bool, STANDING>(true, STANDING.MagnaCumLaude);
             else
-                standing = STANDING.MagnaCumLaude;
-
-            switch (standing)
-            {
-                case STANDING.Remedial:
-                    return new Tuple<bool, STANDING>(false, standing);
-                case STANDING.Average:
-                    return new Tuple<bool, STANDING>(true, standing);
-                case STANDING.SumaCumLaude:
-                    return new Tuple<bool, STANDING>(true, standing);
-                case STANDING.MagnaCumLaude:
-                    return new Tuple<bool, STANDING>(true, standing);
-
-                default:
-                    return new Tuple<bool, STANDING>(false, standing);
-            } 
+                return new Tuple<bool, STANDING>(false, STANDING.MagnaCumLaude);
         }
     }
 }
